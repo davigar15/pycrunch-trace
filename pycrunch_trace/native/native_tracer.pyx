@@ -265,11 +265,25 @@ cdef class NativeTracer:
 
     cdef str ensure_safe_for_serialization(self, value):
         current_type = type(value)
-        if current_type not in allowed_types:
-            return str(current_type)
-        # return 'a'
-        # todo is this slowdown?
-        return str(value)
+
+        # 1. Your logic for simple types
+        if current_type in allowed_types:
+            return str(value)
+
+        # 2. Your logic for class instances
+        if hasattr(value, '__dict__'):
+            try:
+                return str(value.__dict__)
+            except Exception as e:
+                pass
+
+        # 3. THE FIX: Revert to the original, safe fallback
+        #
+        # OLD, DANGEROUS CODE:
+        # return str(value)
+        #
+        # NEW, SAFE CODE:
+        return str(current_type)
 
     cdef push_traceable_variables(self, frame, NativeVariables locals):
         cdef NativeVariable current
